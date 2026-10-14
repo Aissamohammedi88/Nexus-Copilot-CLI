@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Chat Editor</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --text: #e0e0e0;
+            --accent: #00f0ff;
+            --text-disable: #555;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 80%;
+            max-width: 800px;
+            border: 1px solid var(--accent);
+            border-radius: 15px;
+            padding: 20px;
+            background: #12121a;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #0a0a0f;
+            border-radius: 8px;
+        }
+        .message {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+        .chat-input-editor {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .auto-width-grid {
+            vertical-align: middle;
+            align-items: center;
+            display: inline-grid;
+            position: relative;
+            flex: 1;
+        }
+        .auto-width-grid:after,
+        .auto-width-grid input {
+            width: initial;
+            min-width: 16px;
+            font: inherit;
+            resize: none;
+            appearance: none;
+            background: 0 0;
+            grid-area: 1/1;
+            margin: 0;
+            border: none;
+            color: var(--text);
+            padding: 10px;
+            border-radius: 8px;
+            background: #1a1a2e;
+        }
+        .auto-width-grid:after {
+            content: attr(data-value) " ";
+            visibility: hidden;
+            white-space: pre-wrap;
+            height: 23px;
+        }
+        button {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="chat-input-editor">
+            <div class="auto-width-grid" id="grid">
+                <input id="input" placeholder="Écrivez votre message..." oninput="maj()">
+            </div>
+            <button onclick="envoyer()">Envoyer</button>
+        </div>
+    </div>
+    <script>
+        function maj() {
+            const input = document.getElementById('input');
+            document.getElementById('grid').setAttribute('data-value', input.value);
+        }
+        function envoyer() {
+            const input = document.getElementById('input');
+            const messages = document.getElementById('messages');
+            if (input.value.trim()) {
+                const div = document.createElement('div');
+                div.className = 'message';
+                div.textContent = input.value;
+                messages.appendChild(div);
+                input.value = '';
+                maj();
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>

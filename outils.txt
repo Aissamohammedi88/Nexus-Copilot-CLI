@@ -1,0 +1,10 @@
+https://api-prod.nvidia.com');
+https://api-prod.nvidia.com/search/graphql
+https://cdn.cookielaw.org/scripttemplates/otSDKStub.js
+https://developer.nvidia.com/rapids/
+https://developer.nvidia.com/tools-overview
+https://developers.googleapis.com
+https://fonts.googleapis.com/css?family=Google+Sans:400,500|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700&display=swap
+https://www.googleapis.com/auth/developerprofiles
+https://www.googleapis.com/auth/developerprofiles.award
+https://www.googleapis.com/auth/devprofiles.full_control.firstparty
