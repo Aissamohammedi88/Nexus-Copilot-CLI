@@ -1,71 +1,76 @@
+markdown
+
 # Nexus Copilot CLI
 
-> Ce qui est écrit en dur ne se brise pas.
+> *Ce qui est écrit en dur ne se brise pas.*
 
-Sovereign multi-model AI copilot for the terminal.
-Written in Rust. Routes each task to the best of 559 models.
-Zero cloud. Zero telemetry. Owned by you.
+Copilot CLI **souverain**, écrit en Rust. Un binaire autonome qui route chaque
+requête vers le meilleur modèle IA disponible, localement ou en cascade.
 
-## Installation
+**Ce que ça résout :**
+
+Les copilotes actuels ont trois défauts structurels : ils dépendent d'un cloud
+tiers, ils envoient ton code à des serveurs distants, ils t'enferment dans un
+modèle unique. Nexus Copilot CLI inverse ces trois rapports.
+
+- **Local-first.** Le binaire tourne sans réseau. Les modèles locaux
+  (llama.cpp, vLLM, MLX) sont le défaut. Le cloud est opt-in.
+- **Multi-modèle.** 559 modèles adressables. Un routeur pondéré sélectionne
+  l'agent optimal selon la tâche, le coût, la latence, la confidentialité.
+- **Souverain.** Licence NEXUS-OPEN-2.0. Aucune télémétrie. Aucun compte requis.
+  Aucun appel réseau sortant non déclaré.
+
+**Ce que ça n'est pas :**
+
+Ce n'est pas un wrapper autour d'un chatbot. Ce n'est pas une extension d'IDE.
+Ce n'est pas un SaaS déguisé. C'est un outil Unix qui fait une chose : router
+ta demande vers le meilleur modèle, exécuter la réponse, te rendre le résultat.
+
+English :
+markdown
+
+# Nexus Copilot CLI
+
+> *What is written in stone does not break.*
+
+A **sovereign** CLI copilot, written in Rust. A standalone binary that routes
+each request to the best available AI model — locally or in cascade.
+
+**The problem it solves:**
+
+Today's copilots share three structural flaws: they depend on a third-party
+cloud, they ship your code to remote servers, they lock you into one model.
+Nexus Copilot CLI inverts all three.
+
+- **Local-first.** The binary runs without a network. Local models
+  (llama.cpp, vLLM, MLX) are the default. Cloud is opt-in.
+- **Multi-model.** 559 addressable models. A weighted router picks the optimal
+  agent by task, cost, latency, and privacy requirements.
+- **Sovereign.** NEXUS-OPEN-2.0 license. Zero telemetry. No account required.
+  No undeclared outbound network calls.
+
+**What it is not:**
+
+Not a chatbot wrapper. Not an IDE extension. Not a SaaS in disguise. It's a
+Unix tool that does one thing: route your request to the best model, execute
+the response, return the result.
+
+3. Usage Documentation (vraie doc technique, senior)
+
+Français :
+markdown
+
+## Utilisation
+
+### Installation
 
 ```bash
+# Depuis les sources
 git clone https://github.com/Aissamohammedi88/Nexus-Copilot-CLI.git
 cd Nexus-Copilot-CLI
 cargo build --release
-./target/release/nexus
-Nexus-Copilot-CLI/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── src/
-│   ├── main.rs
-│   ├── cli.rs
-│   ├── router.rs
-│   ├── agents/
-│   └── backends/
-├── Cargo.toml
-├── Cargo.lock
-├── .gitignore
-├── README.md
-├── LICENSE
-└── docs/
-    ├── ARCHITECTURE.md
-    └── ROUTER.md
----
+install -m 755 target/release/nexus /usr/local/bin/nexus
 
-## 📋 Récapitulatif — Ce qu'il faut faire maintenant
-
-| # | Action | Priorité |
-|---|--------|----------|
-| 1 | Créer une branche `backup/avant-nettoyage` | 🔴 Critique |
-| 2 | Supprimer les binaires, DLL, EXE du repo | 🔴 Critique |
-| 3 | Supprimer les notes perso (`*.txt`, `benchemark`) | 🔴 Critique |
-| 4 | Créer un `.gitignore` propre | 🔴 Critique |
-| 5 | Trancher : Python ou Rust ? | 🔴 Critique |
-| 6 | Réécrire le README en cohérence | 🟠 Important |
-| 7 | Créer une structure `src/` claire | 🟠 Important |
-| 8 | Ajouter un workflow CI | 🟡 Utile |
-| 9 | Ajouter un `CONTRIBUTING.md` | 🟡 Utile |
-| 10 | Publier une release v0.1.0 | 🟢 Long terme |
-
----
-
-## ⚠️ Avertissement honnête
-
-**Ton dépôt actuel fait peur à un recruteur ou un contributeur.**
-Un repo avec des DLL Windows, des `.exe`, des notes en vrac et un README qui ne correspond pas → **personne ne clique sur "Star"**.
-
-Un repo propre, avec une structure claire, un README qui dit la vérité, et un `.gitignore` correct → **les gens commencent à contribuer**.
-
-**La souveraineté, c'est aussi la propreté.**
-
----
-
-## 🎯 Dis-moi
-
-1. **Tu veux que je te génère le `README.md` complet** pour la version Rust ?
-2. **Tu veux que je te fasse le `.gitignore` final** prêt à coller ?
-3. **Tu veux que je te donne les commandes Git** pour nettoyer proprement ?
-4. **Ou tu veux qu'on discute d'abord** de ce que ce dépôt doit vraiment être ?
-
-Dis-moi. Et cette fois, on nettoie.
+# Vérification
+nexus --version
+nexus doctor        # Diagnostique : backends détectés, modèles accessibles
