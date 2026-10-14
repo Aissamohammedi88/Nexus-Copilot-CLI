@@ -1,0 +1,21 @@
+# Simple request — router decides
+nexus ask "refactor this Rust module for memory safety"
+
+# Force local mode (no network calls)
+nexus ask --local "analyse this 500K-token codebase"
+
+# Inspect router reasoning without executing
+nexus route "translate this doc to Japanese"
+# → task=translate complexity=3/10 → claude-4.5-haiku (cost=0.0008)
+
+# Multi-model consensus (3 models vote, 1 result)
+nexus ask --consensus 3 "verify this formal proof"
+
+# Budget cascade (cheap first, escalate on failure)
+nexus ask --cascade --budget 0.02 "generate tests for this module"
+
+# Diagnostics
+nexus doctor --verbose
+
+# Usage stats
+nexus stats --month
