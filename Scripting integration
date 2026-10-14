@@ -1,0 +1,13 @@
+# Diff review in a pre-commit hook
+git diff --cached | nexus ask --stdin "review this diff, flag bugs" \
+  | tee /tmp/review.txt
+[ -s /tmp/review.txt ] || exit 1
+
+# Batch processing
+find src/ -name "*.rs" | while read f; do
+  nexus ask --local "detect blind unwraps in $f" < "$f"
+done
+
+# Multi-stage pipe
+nexus ask "extract TODOs from this file" < src/main.rs \
+  | nexus ask --stdin "rank them by priority"
