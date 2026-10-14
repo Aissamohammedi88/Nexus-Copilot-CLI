@@ -1,0 +1,40 @@
+Mode	Comportement	Cas d'usage
+weighted	Score tous les modèles, prend le meilleur	Défaut, quotidien
+strict	Utilise le primaire configuré	Coût prévisible
+consensus	N modèles votent en parallèle	Décisions critiques
+fastest	Course — premier à répondre	UX temps réel
+cascade	Pas cher d'abord, escalade si échec	Budget serré
+
+Exit codes
+Code	Signification
+0	Succès
+1	Erreur générique
+2	Erreur de configuration
+3	Budget dépassé
+4	Aucun backend disponible
+5	Timeout routeur
+130	Interruption (Ctrl+C)~/.config/nexus/
+├── config.toml           # Configuration utilisateur
+├── credentials.toml      # Clés API (chmod 600, jamais commité)
+└── history.jsonl         # Journal des requêtes (opt-in)
+
+~/.cache/nexus/
+├── models/               # Cache modèles locaux
+└── embeddings/           # Index RAG
+
+**English :**
+
+```markdown
+## Usage
+
+### Installation
+
+```bash
+git clone https://github.com/Aissamohammedi88/Nexus-Copilot-CLI.git
+cd Nexus-Copilot-CLI
+cargo build --release
+install -m 755 target/release/nexus /usr/local/bin/nexus
+
+nexus --version
+nexus doctor        # Diagnoses: detected backends, reachable models
+
