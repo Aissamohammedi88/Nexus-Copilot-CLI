@@ -1,0 +1,396 @@
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEXUS CODESPACES DIAGNOSTIC — Diagnostic & Debug
+# ─────────────────────────────────────────────────────────────────────────────
+# Vérifie la santé d'un environnement GitHub Codespaces :
+#   - Identité du codespace & variables d'environnement
+#   - Outils disponibles (git, gh, curl, python, node…)
+#   - Connectivité réseau & domaines requis par GitHub
+#   - Ports forwardés & processus en écoute
+#   - Ressources système (CPU, RAM, disque)
+#   - Logs récents & erreurs
+#
+# Auteur  : Aissa Mohammedi (DGK)
+# Licence : NEXUS-OPEN-2.0
+# Version : 1.0.0
+# Usage   : bash codespaces-diagnostic.sh [--full] [--json]
+# ═══════════════════════════════════════════════════════════════════════════════
+
+set -uo pipefail
+
+# ─── Options ──────────────────────────────────────────────────────────────────
+FULL=false
+JSON=false
+for arg in "$@"; do
+    case "$arg" in
+        --full) FULL=true ;;
+        --json) JSON=true ;;
+        -h|--help)
+            echo "Usage: $0 [--full] [--json]"
+            echo "  --full  : diagnostic approfondi (tous les domaines, ports, processus)"
+            echo "  --json  : sortie au format JSON"
+            exit 0 ;;
+    esac
+done
+
+# ─── Couleurs ─────────────────────────────────────────────────────────────────
+if [[ -t 1 ]]; then
+    G='\033[1;32m'; R='\033[1;31m'; Y='\033[1;33m'
+    C='\033[1;36m'; M='\033[1;35m'; W='\033[1;37m'
+    D='\033[2m';    N='\033[0m'
+else
+    G=''; R=''; Y=''; C=''; M=''; W=''; D=''; N=''
+fi
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+ok()    { printf "  ${G}[✓]${N} %s\n" "$*"; }
+ko()    { printf "  ${R}[✗]${N} %s\n" "$*"; }
+warn()  { printf "  ${Y}[!]${N} %s\n" "$*"; }
+info()  { printf "  ${C}[i]${N} %s\n" "$*"; }
+sep()   { printf "\n${M}═══════════════════════════════════════════════════════════${N}\n"; }
+head()  { printf "\n${W}▸ %s${N}\n" "$*"; }
+
+# ─── Accumulateur JSON ────────────────────────────────────────────────────────
+JSON_OUT="{}"
+json_add() {
+    local key="$1" val="$2"
+    JSON_OUT=$(printf '%s' "$JSON_OUT" | jq --arg k "$key" --arg v "$val" '. + {($k): $v}' 2>/dev/null || echo "$JSON_OUT")
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 1. IDENTITÉ DU CODESPACE
+# ═══════════════════════════════════════════════════════════════════════════════
+sep
+printf "${W}╔══════════════════════════════════════════════════════════════╗${N}\n"
+printf "${W}║   NEXUS CODESPACES DIAGNOSTIC                              ║${N}\n"
+printf "${W}║   Aissa Mohammedi (DGK) — NEXUS-OPEN-2.0                   ║${N}\n"
+printf "${W}╚══════════════════════════════════════════════════════════════╝${N}\n"
+sep
+
+head "1. IDENTITÉ DU CODESPACE"
+
+CODESPACE_NAME="${CODESPACE_NAME:-non-défini}"
+GITHUB_USER="${GITHUB_USER:-non-défini}"
+GITHUB_REPO="${GITHUB_REPOSITORY:-non-défini}"
+CS_MACHINE="${CODESPACE_MACHINE_TYPE:-non-défini}"
+CS_REGION="${CODESPACE_REGION:-non-défini}"
+CS_SKU="${CODESPACE_MACHINE_TYPE:-non-défini}"
+
+info "Nom du codespace : ${C}${CODESPACE_NAME}${N}"
+info "Utilisateur       : ${C}${GITHUB_USER}${N}"
+info "Dépôt             : ${C}${GITHUB_REPO}${N}"
+info "Machine           : ${C}${CS_MACHINE}${N}"
+info "Région            : ${C}${CS_REGION}${N}"
+info "Hostname          : $(hostname)"
+info "Uptime            : $(uptime -p 2>/dev/null || echo '?')"
+
+json_add "codespace_name" "$CODESPACE_NAME"
+json_add "github_user" "$GITHUB_USER"
+json_add "github_repo" "$GITHUB_REPO"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 2. VARIABLES D'ENVIRONNEMENT CODESPACES
+# ═══════════════════════════════════════════════════════════════════════════════
+head "2. VARIABLES D'ENVIRONNEMENT CODESPACES"
+
+CS_VARS=(
+    "CODESPACE_NAME" "CODESPACE_VSCODE_FOLDER" "CODESPACE_MACHINE_TYPE"
+    "CODESPACE_REGION" "GITHUB_USER" "GITHUB_REPOSITORY"
+    "GITHUB_TOKEN" "GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN"
+    "VSCODE_GIT_ASKPASS_NODE" "VSCODE_GIT_ASKPASS_MAIN"
+    "VSCODE_GIT_ASKPASS_EXTRA_ARGS" "VSCODE_GIT_IPC_HANDLE"
+    "BROWSER" "LANG" "LC_ALL" "SHELL" "USER" "HOME"
+)
+
+for var in "${CS_VARS[@]}"; do
+    val="${!var:-}"
+    if [[ -z "$val" ]]; then
+        printf "  ${D}%-45s${N} ${Y}(vide)${N}\n" "$var"
+    elif [[ "$var" == *"TOKEN"* || "$var" == *"SECRET"* ]]; then
+        printf "  ${C}%-45s${N} ${G}***masqué***${N} (${#val} chars)\n" "$var"
+    else
+        printf "  ${C}%-45s${N} %s\n" "$var" "$val"
+    fi
+done
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 3. OUTILS DISPONIBLES
+# ═══════════════════════════════════════════════════════════════════════════════
+head "3. OUTILS DISPONIBLES"
+
+TOOLS=(git gh curl wget jq python3 pip3 node npm yarn docker kubectl terraform go rustc cargo gcc make sqlite3 nmap ss lsof dig host netstat traceroute)
+
+for tool in "${TOOLS[@]}"; do
+    if command -v "$tool" >/dev/null 2>&1; then
+        ver=$("$tool" --version 2>/dev/null | head -1 | cut -c1-60 || echo "version ?")
+        printf "  ${G}[✓]${N} %-12s ${D}%s${N}\n" "$tool" "$ver"
+    else
+        printf "  ${Y}[ ]${N} %-12s ${D}non installé${N}\n" "$tool"
+    fi
+done
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 4. CONNECTIVITÉ RÉSEAU
+# ═══════════════════════════════════════════════════════════════════════════════
+head "4. CONNECTIVITÉ RÉSEAU"
+
+# 4.1 Résolveurs DNS
+info "Résolveurs DNS configurés :"
+if [[ -f /etc/resolv.conf ]]; then
+    grep '^nameserver' /etc/resolv.conf | awk '{print "    "$2}' | head -5
+fi
+
+# 4.2 Test de connectivité aux domaines GitHub
+info "Test des domaines GitHub (via curl) :"
+
+GITHUB_DOMAINS=(
+    "github.com"
+    "api.github.com"
+    "codeload.github.com"
+    "objects.githubusercontent.com"
+    "raw.githubusercontent.com"
+    "github.dev"
+    "githubusercontent.com"
+)
+
+CONNECT_OK=0
+CONNECT_FAIL=0
+
+for domain in "${GITHUB_DOMAINS[@]}"; do
+    code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "https://${domain}" 2>/dev/null || echo "000")
+    if [[ "$code" =~ ^(200|301|302|403|404)$ ]]; then
+        printf "  ${G}[✓]${N} %-40s HTTP %s\n" "$domain" "$code"
+        CONNECT_OK=$((CONNECT_OK + 1))
+    else
+        printf "  ${R}[✗]${N} %-40s HTTP %s\n" "$domain" "$code"
+        CONNECT_FAIL=$((CONNECT_FAIL + 1))
+    fi
+done
+
+# 4.3 Domaines spécifiques Codespaces
+info "Domaines spécifiques Codespaces :"
+CS_DOMAINS=(
+    "github.dev"
+    "*.github.dev"
+    "*.app.github.dev"
+    "*.visualstudio.com"
+)
+
+for domain in "${CS_DOMAINS[@]}"; do
+    printf "  ${C}[i]${N} %s\n" "$domain"
+done
+
+# 4.4 Test de ping (peut être bloqué)
+info "Test ICMP (ping) :"
+if ping -c 2 -W 2 8.8.8.8 >/dev/null 2>&1; then
+    rtt=$(ping -c 2 -W 2 8.8.8.8 2>/dev/null | tail -1 | awk -F'/' '{print $5}')
+    ok "Ping 8.8.8.8 : ${rtt}ms"
+else
+    warn "Ping ICMP bloqué (normal dans Codespaces — GitHub bloque ICMP)"
+fi
+
+# 4.5 Test DNS
+info "Résolution DNS :"
+if dig +short +timeout=3 github.com >/dev/null 2>&1; then
+    ip=$(dig +short +timeout=3 github.com | head -1)
+    ok "github.com → $ip"
+else
+    ko "Échec résolution DNS github.com"
+fi
+
+# 4.6 Latence
+info "Latence réseau :"
+for domain in github.com api.github.com; do
+    t=$(curl -s -o /dev/null -w "%{time_total}" --max-time 10 "https://${domain}" 2>/dev/null || echo "?")
+    printf "    %-25s ${C}%ss${N}\n" "$domain" "$t"
+done
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 5. DOMAINES REQUIS PAR CODESPACES (via gh CLI)
+# ═══════════════════════════════════════════════════════════════════════════════
+head "5. DOMAINES REQUIS (gh api meta)"
+
+if command -v gh >/dev/null 2>&1; then
+    info "Récupération des domaines requis..."
+    domains=$(gh api meta --jq '.domains.codespaces' 2>/dev/null || echo "")
+    if [[ -n "$domains" && "$domains" != "null" ]]; then
+        echo "$domains" | jq -r '.[]' 2>/dev/null | while read -r d; do
+            printf "  ${C}[i]${N} %s\n" "$d"
+        done
+    else
+        warn "Impossible de récupérer les domaines (gh non authentifié ?)"
+        info "Lance : gh auth login"
+    fi
+else
+    warn "gh CLI non installé"
+    info "Installation : sudo apt install gh"
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 6. PORTS FORWARDÉS & PROCESSUS
+# ═══════════════════════════════════════════════════════════════════════════════
+head "6. PORTS & PROCESSUS"
+
+# 6.1 Ports en écoute
+info "Ports en écoute (TCP) :"
+ports=$(ss -tln 2>/dev/null | tail -n +2 | awk '{print $4}' | grep -oE ':[0-9]+$' | tr -d ':' | sort -un)
+if [[ -n "$ports" ]]; then
+    for port in $ports; do
+        proc=$(ss -tlnp 2>/dev/null | grep ":${port} " | grep -oP '(?<=users:\(\(")[^"]+' | head -1)
+        printf "  ${C}%-6s${N} %s\n" "$port" "${proc:-?}"
+    done
+else
+    info "Aucun port TCP en écoute"
+fi
+
+# 6.2 Ports forwardés (via gh CLI)
+info "Ports forwardés (gh codespace ports) :"
+if command -v gh >/dev/null 2>&1; then
+    cs_ports=$(gh codespace ports --json sourcePort,targetPort,visibility 2>/dev/null || echo "")
+    if [[ -n "$cs_ports" && "$cs_ports" != "[]" ]]; then
+        echo "$cs_ports" | jq -r '.[] | "  \(.sourcePort) → \(.targetPort) [\(.visibility)]"' 2>/dev/null
+    else
+        warn "Aucun port forwardé détecté"
+    fi
+fi
+
+# 6.3 Processus principaux
+info "Processus actifs (top 10 CPU) :"
+ps aux --sort=-%cpu 2>/dev/null | head -11 | tail -10 | awk '{printf "  %-8s %-6s %-6s %s\n", $1, $3"%", $4"%", substr($11,1,40)}'
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 7. RESSOURCES SYSTÈME
+# ═══════════════════════════════════════════════════════════════════════════════
+head "7. RESSOURCES SYSTÈME"
+
+# 7.1 CPU
+cpu_count=$(nproc 2>/dev/null || echo "?")
+cpu_load=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo "?")
+cpu_pct=$(awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u;t1=t}else{printf "%.1f", (u-u1)*100/(t-t1)}}' <(grep 'cpu ' /proc/stat; sleep 0.3; grep 'cpu ' /proc/stat) 2>/dev/null || echo "?")
+info "CPU : ${cpu_count} cœurs — charge ${cpu_load} — utilisation ${cpu_pct}%"
+
+# 7.2 RAM
+ram_total=$(awk '/MemTotal/{printf "%.1f", $2/1024/1024}' /proc/meminfo 2>/dev/null || echo "?")
+ram_used=$(awk '/MemTotal/{t=$2}/MemAvailable/{a=$2}END{printf "%.1f", (t-a)/1024/1024}' /proc/meminfo 2>/dev/null || echo "?")
+ram_pct=$(awk "BEGIN{printf \"%d\", $ram_used*100/$ram_total}" 2>/dev/null || echo "?")
+info "RAM : ${ram_used} Go / ${ram_total} Go (${ram_pct}%)"
+
+# 7.3 Disque
+disk_info=$(df -h / 2>/dev/null | awk 'NR==2{print $3" / "$2" ("$5")"}' || echo "?")
+info "Disque : ${disk_info}"
+
+# 7.4 Mémoire partagée
+shm_info=$(df -h /dev/shm 2>/dev/null | awk 'NR==2{print $3" / "$2" ("$5")"}' || echo "?")
+info "Shm : ${shm_info}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 8. LOGS & ERREURS
+# ═══════════════════════════════════════════════════════════════════════════════
+head "8. LOGS & ERREURS"
+
+# 8.1 Logs VS Code Remote
+info "Logs VS Code Remote (dernières lignes) :"
+VSCODE_LOGS="$HOME/.vscode-remote/data/logs"
+if [[ -d "$VSCODE_LOGS" ]]; then
+    latest_log=$(find "$VSCODE_LOGS" -name "*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2)
+    if [[ -n "$latest_log" ]]; then
+        info "Fichier : $(basename "$latest_log")"
+        tail -20 "$latest_log" 2>/dev/null | sed 's/^/    /' | head -20
+    fi
+else
+    warn "Aucun log VS Code Remote trouvé"
+fi
+
+# 8.2 Logs système
+info "Logs système (journalctl) :"
+if command -v journalctl >/dev/null 2>&1; then
+    journalctl --no-pager -n 10 2>/dev/null | tail -10 | sed 's/^/    /'
+fi
+
+# 8.3 Fichiers récents
+info "Fichiers récents dans le workspace :"
+if [[ -d /workspaces ]]; then
+    find /workspaces -maxdepth 2 -type f -mmin -60 2>/dev/null | head -10 | sed 's/^/    /'
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 9. DIAGNOSTIC DE LA CONNEXION VS CODE
+# ═══════════════════════════════════════════════════════════════════════════════
+head "9. CONNEXION VS CODE SERVER"
+
+# 9.1 Processus VS Code Server
+info "Processus VS Code Server :"
+vscode_procs=$(ps aux 2>/dev/null | grep -E "vscode-server|node.*vscode" | grep -v grep | wc -l)
+if [[ "$vscode_procs" -gt 0 ]]; then
+    ok "$vscode_procs processus VS Code actifs"
+    ps aux 2>/dev/null | grep -E "vscode-server" | grep -v grep | head -5 | awk '{printf "    PID %-8s %s\n", $2, substr($11,1,50)}'
+else
+    warn "Aucun processus VS Code Server"
+fi
+
+# 9.2 Socket VS Code
+info "Sockets VS Code :"
+if [[ -S /tmp/vscode-ipc-* ]] 2>/dev/null; then
+    ls -la /tmp/vscode-ipc-* 2>/dev/null | head -5 | sed 's/^/    /'
+else
+    info "Pas de socket IPC VS Code (normal si terminal seul)"
+fi
+
+# 9.3 Port VS Code Server
+info "Port VS Code Server :"
+ss -tln 2>/dev/null | grep -E ":(3000|8080|8443|9000)" | sed 's/^/    /' || info "  Aucun port VS Code standard"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 10. RÉSUMÉ DU DIAGNOSTIC
+# ═══════════════════════════════════════════════════════════════════════════════
+sep
+head "10. RÉSUMÉ DU DIAGNOSTIC"
+
+echo ""
+info "Identité    : ${CODESPACE_NAME:-?}"
+info "Connexion   : ${CONNECT_OK}/${#GITHUB_DOMAINS[@]} domaines accessibles"
+info "Ressources  : ${cpu_pct}% CPU · ${ram_pct}% RAM · ${disk_info}"
+info "Logs        : ${VSCODE_LOGS:-non trouvés}"
+
+echo ""
+if (( CONNECT_FAIL == 0 )); then
+    ok "Tous les domaines GitHub sont accessibles"
+else
+    warn "${CONNECT_FAIL} domaine(s) GitHub inaccessible(s)"
+    info "Vérifie ton pare-feu / proxy réseau"
+fi
+
+echo ""
+printf "${W}Commandes utiles pour le débogage :${N}\n"
+echo "  gh codespace ports                    # Voir les ports forwardés"
+echo "  gh codespace ssh                      # SSH dans le codespace"
+echo "  gh codespace logs                     # Logs du codespace"
+echo "  gh api meta --jq .domains.codespaces  # Domaines requis"
+echo "  code --status                         # Statut VS Code (si CLI dispo)"
+echo ""
+
+# ─── Sortie JSON ──────────────────────────────────────────────────────────────
+if [[ "$JSON" == "true" ]]; then
+    echo ""
+    printf "${W}Sortie JSON :${N}\n"
+    jq -n \
+        --arg codespace "$CODESPACE_NAME" \
+        --arg user "$GITHUB_USER" \
+        --arg repo "$GITHUB_REPO" \
+        --arg cpu "$cpu_pct" \
+        --arg ram "$ram_pct" \
+        --arg disk "$disk_info" \
+        --arg connect_ok "$CONNECT_OK" \
+        --arg connect_fail "$CONNECT_FAIL" \
+        '{
+            codespace: $codespace,
+            user: $user,
+            repo: $repo,
+            resources: { cpu_pct: $cpu, ram_pct: $ram, disk: $disk },
+            connectivity: { ok: $connect_ok, fail: $connect_fail }
+        }'
+fi
+
+sep
+printf "${G}Diagnostic terminé.${N}\n"
+sep
