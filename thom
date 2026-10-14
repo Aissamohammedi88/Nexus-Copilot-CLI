@@ -1,64 +1,20 @@
-# ═══════════════════════════════════════════════════════════════════
-# Nexus Copilot CLI — Agent routing configuration
-# ═══════════════════════════════════════════════════════════════════
-
 [router]
-strategy = "weighted"           # weighted | strict | consensus | fastest
-default_fallback_depth = 3
-enable_local_by_default = true
+strategy = "weighted"     # weighted | strict | consensus | fastest | cascade
 
 [router.weights]
-quality     = 0.45
-cost        = 0.25
-latency     = 0.15
-privacy     = 0.10
+quality      = 0.45
+cost         = 0.25
+latency      = 0.15
+privacy      = 0.10
 availability = 0.05
 
 [budget]
-monthly_usd = 50.00
-per_request_usd = 0.10
-alert_at_percent = 80
+monthly_usd   = 50.00
+per_request   = 0.10
 
-[privacy]
-allow_cloud = true
-pii_redaction = true
-local_only_tasks = ["secrets.*", "private.*"]
+[backends.local]
+engine  = "vllm"
+address = "http://localhost:8000"
 
-[providers.openai]
-api_key = "${OPENAI_API_KEY}"
-models = ["gpt-5", "gpt-5-turbo", "gpt-4o", "gpt-4o-mini", "o3", "o4-mini"]
-enabled = true
-
-[providers.anthropic]
-api_key = "${ANTHROPIC_API_KEY}"
-models = ["claude-4.5-opus", "claude-4.5-sonnet", "claude-4.5-haiku"]
-enabled = true
-
-[providers.google]
-api_key = "${GOOGLE_API_KEY}"
-models = ["gemini-3-ultra", "gemini-3-pro", "gemini-3-flash"]
-enabled = true
-
-[providers.local]
-engine = "ollama"
-endpoint = "http://localhost:11434"
-models = ["llama4:405b", "qwen3:32b", "deepseek-v3:671b"]
-enabled = true
-
-[providers.openrouter]
-api_key = "${OPENROUTER_API_KEY}"
-# gives access to 200+ models through a single endpoint
-enabled = true
-
-[task_routing.code.refactor]
-primary = "anthropic:claude-4.5-sonnet"
-fallback = ["openai:gpt-5", "local:qwen3:32b"]
-
-[task_routing.math.reasoning]
-primary = "deepseek:r1"
-fallback = ["openai:o3", "local:deepseek-r1:32b"]
-
-[task_routing.privacy.sensitive]
-primary = "local:llama4:405b"
-fallback = ["local:qwen3:32b"]
-allow_cloud = false
+[backends.cloud.openai]
+enabled = false           # opt-in explicite
