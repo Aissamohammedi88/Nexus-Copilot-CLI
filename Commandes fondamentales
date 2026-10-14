@@ -1,0 +1,21 @@
+# Requête simple — le routeur décide
+nexus ask "refactor this Rust module for memory safety"
+
+# Forcer le mode local (aucun appel réseau)
+nexus ask --local "analyse ce codebase de 500K tokens"
+
+# Consulter le raisonnement du routeur sans exécuter
+nexus route "traduis cette doc en japonais"
+# → task=translate complexity=3/10 → claude-4.5-haiku (cost=0.0008)
+
+# Consensus multi-modèle (3 modèles votent, 1 résultat)
+nexus ask --consensus 3 "vérifie cette preuve formelle"
+
+# Cascade budgétaire (commence cheap, escalade si échec)
+nexus ask --cascade --budget 0.02 "génère les tests pour ce module"
+
+# Mode diagnostic
+nexus doctor --verbose
+
+# Statistiques d'usage
+nexus stats --month
