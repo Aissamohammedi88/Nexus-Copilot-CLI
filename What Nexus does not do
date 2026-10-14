@@ -1,0 +1,39 @@
+outing modes
+Mode	Behavior	Use case
+weighted	Scores all models, picks best	Default, everyday
+strict	Uses configured primary	Predictable cost
+consensus	N models vote in parallel	High-stakes
+fastest	Race — first to respond wins	Real-time UX
+cascade	Cheap first, escalate on failure	Budget-tight
+Exit codes
+Code	Meaning
+0	Success
+1	Generic error
+2	Configuration error
+3	Budget exceeded
+4	No backend available
+5	Router timeout
+130	Interrupted (Ctrl+C)
+Working files
+text
+
+~/.config/nexus/
+├── config.toml           # User configuration
+├── credentials.toml      # API keys (chmod 600, never committed)
+└── history.jsonl         # Request log (opt-in)
+
+~/.cache/nexus/
+├── models/               # Local model cache
+└── embeddings/           # RAG index
+
+What Nexus does not do
+
+    Does not store your prompts without explicit consent
+
+    Does not make undeclared network calls in config.toml
+
+    Does not persist tokens in clear text
+
+    Does not bypass your OS security policies
+
+    Never writes outside ~/.config/nexus/ and ~/.cache/nexus/
