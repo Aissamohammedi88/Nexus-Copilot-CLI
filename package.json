@@ -1,0 +1,15 @@
+{
+  "name": "nexus-bringo",
+  "version": "1.0.0",
+  "description": "Projet NEXUS BRINGO \u2014 \u00c9cosyst\u00e8me complet",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}

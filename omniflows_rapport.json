@@ -1,0 +1,114 @@
+{
+  "bot": "OmniFlows Inspector",
+  "version": "1.0.0",
+  "date": "2026-08-27T15:40:35.173606",
+  "points_soumis": [
+    {
+      "point": "Latence anormale sur apple.com/security",
+      "statut": "VALID\u00c9",
+      "numero": 1
+    },
+    {
+      "point": "Cookie non s\u00e9curis\u00e9 sur security.apple.com",
+      "statut": "VALID\u00c9",
+      "numero": 2
+    },
+    {
+      "point": "Redirection d\u00e9tect\u00e9e sur apple.com/security",
+      "statut": "VALID\u00c9",
+      "numero": 3
+    },
+    {
+      "point": "CSP manquant sur security.apple.com",
+      "statut": "VALID\u00c9",
+      "numero": 4
+    },
+    {
+      "point": "HSTS manquant sur machinelearning.apple.com",
+      "statut": "VALID\u00c9",
+      "numero": 5
+    },
+    {
+      "point": "Cookie non s\u00e9curis\u00e9 sur machinelearning.apple.com",
+      "statut": "VALID\u00c9",
+      "numero": 6
+    },
+    {
+      "point": "Latence anormale sur developer.apple.com/security",
+      "statut": "VALID\u00c9",
+      "numero": 7
+    },
+    {
+      "point": "Cookie non s\u00e9curis\u00e9 sur developer.apple.com/security",
+      "statut": "VALID\u00c9",
+      "numero": 8
+    },
+    {
+      "point": "HSTS manquant sur pcc.apple.com",
+      "statut": "VALID\u00c9",
+      "numero": 9
+    },
+    {
+      "point": "CSP manquant sur pcc.apple.com",
+      "statut": "VALID\u00c9",
+      "numero": 10
+    },
+    {
+      "point": "Cookie non s\u00e9curis\u00e9 sur support.apple.com/guide/security/welcome/web",
+      "statut": "VALID\u00c9",
+      "numero": 11
+    },
+    {
+      "point": "Latence anormale sur support.apple.com/guide/security/welcome/web",
+      "statut": "VALID\u00c9",
+      "numero": 12
+    },
+    {
+      "point": "TLS version obsol\u00e8te d\u00e9tect\u00e9e (simul\u00e9)",
+      "statut": "VALID\u00c9",
+      "numero": 13
+    }
+  ],
+  "ecosysteme": {
+    "iPhone": {},
+    "MacBook": {},
+    "services": {
+      "apple.com": {
+        "status": "OK",
+        "code": 200
+      },
+      "icloud.com": {
+        "status": "OK",
+        "code": 200
+      },
+      "developer.apple.com": {
+        "status": "OK",
+        "code": 200
+      },
+      "support.apple.com": {
+        "status": "OK",
+        "code": 200
+      },
+      "machinelearning.apple.com": {
+        "status": "OK",
+        "code": 200
+      },
+      "security.apple.com": {
+        "status": "OK",
+        "code": 200
+      },
+      "pcc.apple.com": {
+        "status": "INACCESSIBLE"
+      }
+    }
+  },
+  "problemes": [
+    {
+      "type": "SERVICE",
+      "domaine": "pcc.apple.com",
+      "probleme": "Service INACCESSIBLE",
+      "code": null
+    }
+  ],
+  "conclusion": "PROBL\u00c8MES D\u00c9TECT\u00c9S"
+}
