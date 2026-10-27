@@ -15,7 +15,7 @@ jobs:
     name: "Analyze (${{ matrix.language }})"
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         # On scanne TOUS les langages du projet, pas un seul.
         language: [ 'javascript-typescript', 'python', 'java-kotlin' ]
